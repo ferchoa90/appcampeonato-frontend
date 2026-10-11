@@ -1,0 +1,50 @@
+// Velzon (recortado): sólo lo que usa GoalScore
+@import "../../fonts/fonts";
+
+@import "./node_modules/bootstrap/scss/functions";
+@import "./node_modules/bootstrap/scss/variables";
+@import "variables";
+@import "./node_modules/bootstrap/scss/mixins";
+
+@import "theme-light";
+@import "theme-dark";
+
+// Estructura
+@import "../../structure/topbar";
+@import "../../structure/page-head";
+@import "../../structure/footer";
+@import "../../structure/vertical";
+@import "../../structure/layouts";
+
+// Componentes
+@import "../../components/avatar";
+@import "../../components/accordion";
+@import "../../components/helper";
+@import "../../components/forms";
+@import "../../components/toast";
+@import "../../components/reboot";
+@import "../../components/alerts";
+@import "../../components/backgrounds";
+@import "../../components/badge";
+@import "../../components/buttons";
+@import "../../components/breadcrumb";
+@import "../../components/card";
+@import "../../components/dropdown";
+@import "../../components/nav";
+@import "../../components/table";
+@import "../../components/modal";
+@import "../../components/pagination";
+@import "../../components/progress";
+@import "../../components/popover";
+@import "../../components/type";
+@import "../../components/form-check";
+@import "../../components/form-control";
+@import "../../components/list-group";
+
+// Plugins
+@import "../../plugins/sweetalert2";
+
+// Páginas
+@import "../../pages/authentication";
+
+@import "./custom.scss";

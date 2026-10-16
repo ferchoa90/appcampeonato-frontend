@@ -42,7 +42,9 @@ import { ThemeService } from '../core/services/theme.service';
       <main class="pub-main"><router-outlet></router-outlet></main>
       <footer class="pub-footer">
         <div class="pub-contenedor">© {{ anio }} GoalScore · AcepSistemas todos los derechos reservados. · Resultados en vivo y tabla de posiciones
-          <span class="d-block mt-1"><a routerLink="/auth/login" class="text-muted">Acceso para organizadores y administradores</a></span></div>
+          <span class="d-block mt-1"><a routerLink="/privacidad" class="text-muted">Política de privacidad</a> ·
+            <a routerLink="/eliminar-cuenta" class="text-muted">Eliminar mi cuenta</a> ·
+            <a routerLink="/auth/login" class="text-muted">Acceso para organizadores y administradores</a></span></div>
       </footer>
     </div>`,
 })

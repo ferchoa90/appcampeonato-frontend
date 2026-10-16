@@ -9,6 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { DialogService } from '../../core/services/dialog.service';
 import { EventoService, JugadorService, PartidoService } from '../../core/services/recursos.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ItemLinea, lineaDeTiempo } from '../../shared/linea-tiempo';
 import { PartidoEditarComponent } from './partido-editar.component';
 import { PostergarModalComponent } from './postergar-modal.component';
 
@@ -22,7 +23,8 @@ interface AccionEstado {
 
 const ACCIONES: AccionEstado[] = [
   { estado: 'INICIADO', texto: 'Iniciar', icono: 'ri-play-circle-line', clase: 'success', aviso: 'Se notificará a los seguidores que el partido comenzó.' },
-  { estado: 'ENTRETIEMPO', texto: 'Entretiempo', icono: 'ri-pause-circle-line', clase: 'warning', aviso: 'Se notificará el entretiempo.' },
+  { estado: 'ENTRETIEMPO', texto: 'Entretiempo', icono: 'ri-pause-circle-line', clase: 'warning', aviso: 'Termina el primer tiempo. Se notificará el entretiempo.' },
+  { estado: 'SEGUNDO_TIEMPO', texto: '2.º tiempo', icono: 'ri-play-circle-line', clase: 'success', aviso: 'Comienza el segundo tiempo. Se notificará a los seguidores.' },
   { estado: 'FINALIZADO', texto: 'Finalizar', icono: 'ri-stop-circle-line', clase: 'primary', aviso: 'Se cerrará el partido con el marcador actual y se notificará el resultado.' },
   { estado: 'POSTERGADO', texto: 'Postergar', icono: 'ri-time-line', clase: 'info', aviso: 'El partido quedará postergado.' },
   { estado: 'PENDIENTE', texto: 'Pendiente', icono: 'ri-restart-line', clase: 'secondary', aviso: 'El partido volverá al estado pendiente.' },
@@ -140,9 +142,13 @@ const ACCIONES: AccionEstado[] = [
           <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">Eventos del partido</h5></div>
             <div class="card-body">
-              <app-estado-lista [vacio]="!eventos.length" mensaje="Todavía no hay eventos."></app-estado-lista>
-              <ul class="list-group list-group-flush" *ngIf="eventos.length">
-                <li class="list-group-item d-flex align-items-center gap-3" *ngFor="let e of eventos">
+              <app-estado-lista [vacio]="!linea.length" mensaje="Todavía no hay eventos."></app-estado-lista>
+              <ul class="list-group list-group-flush" *ngIf="linea.length">
+                <ng-container *ngFor="let it of linea">
+                <li class="list-group-item marca-fase" *ngIf="marcaDe(it) as m">
+                  <i [class]="m.icono + ' align-middle me-1'"></i>{{ m.texto }}<span class="text-muted fw-normal ms-2" *ngIf="m.hora">{{ m.hora }}</span>
+                </li>
+                <li class="list-group-item d-flex align-items-center gap-3" *ngIf="eventoDe(it) as e">
                   <span class="badge bg-primary rounded-pill" style="min-width:48px">{{ e.minuto }}'</span>
                   <span class="fs-4" [ngClass]="'text-' + tipo(e).clase"><i [class]="tipo(e).icono"></i></span>
                   <div class="flex-grow-1">
@@ -155,6 +161,7 @@ const ACCIONES: AccionEstado[] = [
                   </div>
                   <button class="btn btn-sm btn-soft-danger" (click)="eliminar(e)" title="Eliminar evento"><i class="ri-delete-bin-line"></i></button>
                 </li>
+                </ng-container>
               </ul>
             </div>
           </div>
@@ -165,7 +172,8 @@ const ACCIONES: AccionEstado[] = [
 })
 export class GestionarPartidoComponent implements OnInit {
   partido: Partido | null = null;
-  eventos: Evento[] = [];
+  /** Cronología con marcas (inicio, fin del 1.er tiempo, inicio del 2.º, final); lo más reciente arriba. */
+  linea: ItemLinea[] = [];
   jugadores: Jugador[] = [];
   tipos = TIPOS_EVENTO;
   acciones = ACCIONES;
@@ -191,6 +199,8 @@ export class GestionarPartidoComponent implements OnInit {
   get tipoActual() { return this.form.controls.tipo.value as TipoEvento; }
   get esEliminatoria() { return !!this.partido && FASES_ELIMINATORIA.includes(this.partido.fase); }
   tipo(e: Evento) { return TIPOS_EVENTO.find(t => t.valor === e.tipo) ?? TIPOS_EVENTO[7]; }
+  marcaDe(it: ItemLinea) { return it.tipo === 'marca' ? it : null; }
+  eventoDe(it: ItemLinea) { return it.tipo === 'evento' ? it.evento : null; }
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -201,7 +211,7 @@ export class GestionarPartidoComponent implements OnInit {
     this.api.detalle(id).subscribe({
       next: p => {
         this.partido = p;
-        this.eventos = [...(p.eventos ?? [])].sort((a, b) => b.minuto - a.minuto || b.id - a.id);
+        this.linea = lineaDeTiempo(p, p.eventos ?? [], true);
         this.penLocal = p.penales_local;
         this.penVisita = p.penales_visitante;
         if (primera) { this.elegirEquipo(p.local); }

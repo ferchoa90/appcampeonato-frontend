@@ -345,7 +345,8 @@ export class LlavesComponent implements OnChanges {
   ngOnChanges() {
     this.rondas = this.fechas
       .filter(f => FASES_ELIMINATORIA.includes(f.fase))
-      .map(f => ({ titulo: etiquetaFase(f.fase), partidos: f.partidos ?? [] }));
+      // cada ronda en el orden del cuadro (llave), no por hora: los ganadores de la llave 1 y 2 se cruzan, etc.
+      .map(f => ({ titulo: etiquetaFase(f.fase), partidos: [...(f.partidos ?? [])].sort((a, b) => (a.llave ?? 0) - (b.llave ?? 0) || a.id - b.id) }));
   }
 
   marcador(p: { estado: string; goles_local: number; goles_visitante: number; penales_local: number | null; penales_visitante: number | null }, lado: 'L' | 'V') {

@@ -35,12 +35,13 @@ import { JugadorFormComponent } from './jugador-form.component';
         <app-estado-lista [cargando]="cargando" [vacio]="!cargando && !jugadores.length" mensaje="No hay jugadores con esos filtros."></app-estado-lista>
         <div class="table-responsive" *ngIf="jugadores.length">
           <table class="table table-hover align-middle admin-tabla mb-0">
-            <thead class="table-light"><tr><th>Foto</th><th>N°</th><th>Jugador</th><th>Equipo</th><th>Posición</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+            <thead class="table-light"><tr><th class="text-center" style="width:56px">#</th><th>Foto</th><th class="text-center">N°</th><th>Jugador</th><th>Equipo</th><th>Posición</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
             <tbody>
-              <tr *ngFor="let j of jugadores">
+              <tr *ngFor="let j of jugadores; let i = index">
+                <td class="text-center text-muted">{{ (pagina - 1) * 50 + i + 1 }}</td>
                 <td><img *ngIf="j.foto; else ini" [src]="j.foto" class="rounded-circle" width="36" height="36" style="object-fit:cover" alt="">
                   <ng-template #ini><span class="avatar-xs"><span class="avatar-title rounded-circle badge-soft-primary">{{ j.nombres.charAt(0) }}</span></span></ng-template></td>
-                <td class="fw-semibold">{{ j.numero ?? '–' }}</td>
+                <td class="fw-semibold text-center">{{ j.numero ?? '–' }}</td>
                 <td class="fw-medium">{{ j.nombre_completo }}</td>
                 <td>{{ j.equipo_nombre }}</td>
                 <td>{{ j.posicion_nombre }}</td>

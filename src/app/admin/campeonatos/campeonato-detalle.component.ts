@@ -97,8 +97,14 @@ import { ToastService } from '../../core/services/toast.service';
                         <div class="form-text">Vacío: todos los partidos de la fecha el mismo día.</div></div>
                       <div class="col-sm-4 col-md-3"><label class="form-label">Hora del primer partido</label>
                         <input type="time" class="form-control" [(ngModel)]="horaInicio"></div>
+                      <div class="col-sm-4 col-md-3"><label class="form-label">Duración de cada tiempo (min)</label>
+                        <input type="number" min="1" max="120" class="form-control" [(ngModel)]="duracionTiempo">
+                        <div class="form-text">Son 2 tiempos con entretiempo: {{ duracionTiempo * 2 }} min de juego.</div></div>
                       <div class="col-sm-4 col-md-3"><label class="form-label">Minutos entre partidos</label>
-                        <input type="number" min="1" class="form-control" [(ngModel)]="minEntre"></div>
+                        <input type="number" min="1" class="form-control" [(ngModel)]="minEntre">
+                        <div class="form-text" [class.text-warning]="minEntre < duracionTiempo * 2">{{ minEntre < duracionTiempo * 2
+                          ? 'Es menos que los ' + (duracionTiempo * 2) + ' min de juego: los partidos del mismo día se empalmarían.'
+                          : 'Separa la hora de inicio de cada partido del día.' }}</div></div>
                       <div class="col-sm-4 col-md-3" *ngIf="!dias.size"><label class="form-label">Días entre fechas</label>
                         <input type="number" min="1" class="form-control" [(ngModel)]="diasEntre">
                         <div class="form-text">Se usa si no elige días de la semana.</div></div>
@@ -198,6 +204,7 @@ export class CampeonatoDetalleComponent implements OnInit {
   partidosPorDia: number | null = null;
   horaInicio = '19:00';
   minEntre = 90;
+  duracionTiempo = 45;
   guardando = false;
   readonly etiquetaModalidad = etiquetaModalidad;
 
@@ -226,6 +233,7 @@ export class CampeonatoDetalleComponent implements OnInit {
           this.partidosPorDia = c.partidos_por_dia;
           this.horaInicio = c.hora_inicio?.slice(0, 5) || '19:00';
           this.minEntre = c.minutos_entre_partidos || 90;
+          this.duracionTiempo = c.duracion_tiempo || 45;
           this.diasEntre = c.dias_entre_fechas || 7;
         }
         const primera = !this.camp;
@@ -348,7 +356,7 @@ export class CampeonatoDetalleComponent implements OnInit {
   /** El sorteo se bloquea cuando algún partido ya comenzó o se jugó (el servidor también lo valida). */
   get sorteoBloqueado() {
     return [...this.fechasFixture, ...this.fechasLlaves].some(f =>
-      (f.partidos ?? []).some(p => ['INICIADO', 'ENTRETIEMPO', 'FINALIZADO'].includes(p.estado)));
+      (f.partidos ?? []).some(p => ['INICIADO', 'ENTRETIEMPO', 'SEGUNDO_TIEMPO', 'FINALIZADO'].includes(p.estado)));
   }
 
   // ---- Primera fecha manual (opcional)
@@ -453,6 +461,7 @@ export class CampeonatoDetalleComponent implements OnInit {
     opciones.partidos_por_dia = this.partidosPorDia && this.partidosPorDia > 0 ? this.partidosPorDia : 0;
     if (this.horaInicio) { opciones.hora_inicio = this.horaInicio; }
     if (this.minEntre > 0) { opciones.minutos_entre_partidos = this.minEntre; }
+    if (this.duracionTiempo > 0) { opciones.duracion_tiempo = this.duracionTiempo; }
     if (this.diasEntre > 0) { opciones.dias_entre_fechas = this.diasEntre; }
 
     if (this.manual.length) {

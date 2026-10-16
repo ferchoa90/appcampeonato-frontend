@@ -52,6 +52,10 @@ import { ToastService } from '../../core/services/toast.service';
                 <div class="col-4"><label class="form-label">Puntos victoria</label><input type="number" min="0" class="form-control" formControlName="puntos_victoria"></div>
                 <div class="col-4"><label class="form-label">Puntos empate</label><input type="number" min="0" class="form-control" formControlName="puntos_empate"></div>
                 <div class="col-4"><label class="form-label">Puntos derrota</label><input type="number" min="0" class="form-control" formControlName="puntos_derrota"></div>
+                <div class="col-md-6"><label class="form-label">Duración de cada tiempo (min)</label>
+                  <input type="number" min="1" max="120" class="form-control" formControlName="duracion_tiempo" [class.is-invalid]="form.controls.duracion_tiempo.invalid">
+                  <div class="invalid-feedback">Entre 1 y 120 minutos.</div>
+                  <div class="form-text">Dos tiempos con entretiempo.</div></div>
               </div>
             </div>
           </div>
@@ -119,6 +123,7 @@ export class CampeonatoFormComponent implements OnInit {
     puntos_victoria: [3],
     puntos_empate: [1],
     puntos_derrota: [0],
+    duracion_tiempo: [45, [Validators.required, Validators.min(1), Validators.max(120)]],
     estado: ['BORRADOR' as EstadoCampeonato],
     publicado: [false],
     propietario: [null as number | null],

@@ -4,6 +4,7 @@ import { Subscription, catchError, EMPTY, switchMap, timer } from 'rxjs';
 import { Evento, Partido, TIPOS_EVENTO } from '../core/models';
 import { PartidoService } from '../core/services/recursos.service';
 import { REFRESCO_MS } from '../shared/campeonato-vistas';
+import { ItemLinea, lineaDeTiempo } from '../shared/linea-tiempo';
 
 /** Tarjetas por equipo y jugador a partir de los eventos (doble amarilla = 2 amarillas + 1 roja). */
 export function resumirTarjetas(eventos: Evento[]) {
@@ -32,6 +33,7 @@ export function resumirTarjetas(eventos: Evento[]) {
             {{ p.fecha_nombre }}<ng-container *ngIf="p.grupo_nombre"> · {{ p.grupo_nombre }}</ng-container>
             <ng-container *ngIf="p.fecha_hora && p.estado !== 'POSTERGADO'"> · {{ p.fecha_hora | date:'EEEE d MMMM, HH:mm' }}</ng-container>
             <ng-container *ngIf="p.estadio"> · {{ p.estadio }}</ng-container>
+            <ng-container *ngIf="p.duracion_tiempo"> · 2 tiempos de {{ p.duracion_tiempo }} min</ng-container>
           </div>
           <div class="marcador-fila">
             <a class="marcador-equipo" [routerLink]="['/equipo', p.local]"><app-escudo [equipo]="p.local_detalle" [tam]="72"></app-escudo><span>{{ p.local_detalle.nombre }}</span></a>
@@ -65,9 +67,13 @@ export function resumirTarjetas(eventos: Evento[]) {
         <app-galeria-medios [medios]="p.medios"></app-galeria-medios>
 
         <h5 class="titulo-seccion mt-4">Cronología</h5>
-        <app-estado-lista [vacio]="!eventos.length" mensaje="Todavía no hay eventos registrados."></app-estado-lista>
-        <div class="linea-tiempo" *ngIf="eventos.length">
-          <div class="evento" *ngFor="let e of eventos" [class.evento-visita]="e.equipo === p.visitante">
+        <app-estado-lista [vacio]="!linea.length" mensaje="Todavía no hay eventos registrados."></app-estado-lista>
+        <div class="linea-tiempo" *ngIf="linea.length">
+          <ng-container *ngFor="let it of linea">
+          <div class="linea-marca" *ngIf="marcaDe(it) as m">
+            <span><i [class]="m.icono + ' align-middle me-1'"></i>{{ m.texto }}<small class="text-muted ms-2" *ngIf="m.hora">{{ m.hora }}</small></span>
+          </div>
+          <div class="evento" *ngIf="eventoDe(it) as e" [class.evento-visita]="e.equipo === p.visitante">
             <div class="evento-cuerpo">
               <span class="evento-icono" [ngClass]="'text-' + tipo(e).clase"><i [class]="tipo(e).icono"></i></span>
               <div>
@@ -81,6 +87,7 @@ export function resumirTarjetas(eventos: Evento[]) {
             </div>
             <span class="evento-minuto">{{ e.minuto }}'</span>
           </div>
+          </ng-container>
         </div>
       </ng-container>
     </div>`,
@@ -88,6 +95,8 @@ export function resumirTarjetas(eventos: Evento[]) {
 export class PartidoPublicoComponent implements OnInit, OnDestroy {
   partido: Partido | null = null;
   eventos: Evento[] = [];
+  /** Cronología con las marcas de inicio, fin del 1.er tiempo, inicio del 2.º y final. */
+  linea: ItemLinea[] = [];
   resumen: { equipo: number; nombre: string; amarillas: number; rojas: number }[] = [];
   noExiste = false;
   private sub?: Subscription;
@@ -107,7 +116,8 @@ export class PartidoPublicoComponent implements OnInit, OnDestroy {
         }))),
       ).subscribe(p => {
         this.partido = p;
-        this.eventos = [...(p.eventos ?? [])].sort((a, b) => a.minuto - b.minuto || a.id - b.id);
+        this.eventos = [...(p.eventos ?? [])].sort((a, b) => (a.tiempo ?? 1) - (b.tiempo ?? 1) || a.minuto - b.minuto || a.id - b.id);
+        this.linea = lineaDeTiempo(p, this.eventos);
         this.resumen = resumirTarjetas(this.eventos);
         if (p.estado === 'FINALIZADO') { this.sub?.unsubscribe(); }
       });
@@ -115,6 +125,9 @@ export class PartidoPublicoComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() { this.sub?.unsubscribe(); }
+
+  marcaDe(it: ItemLinea) { return it.tipo === 'marca' ? it : null; }
+  eventoDe(it: ItemLinea) { return it.tipo === 'evento' ? it.evento : null; }
 
   filasDe(equipo: number) { return this.resumen.filter(f => f.equipo === equipo); }
 

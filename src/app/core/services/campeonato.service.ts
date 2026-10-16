@@ -19,6 +19,8 @@ export interface OpcionesFixture {
   partidos_por_dia?: number;
   hora_inicio?: string;
   minutos_entre_partidos?: number;
+  /** Minutos de cada tiempo (1 a 120). */
+  duracion_tiempo?: number;
   dias_entre_fechas?: number;
   /** Qué hacer si algún partido cae en feriado: saltar esas fechas o jugar igual (el servidor pregunta si no se indica). */
   feriados?: 'omitir' | 'jugar';

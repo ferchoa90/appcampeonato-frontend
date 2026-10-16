@@ -160,6 +160,16 @@ body { background-color: var(--vz-body-bg); }
 }
 .evento-icono { font-size: 1.3rem; line-height: 1; }
 
+// Marcas de fase en la cronología: inicio, fin del 1.er tiempo, inicio del 2.º y final
+.linea-marca {
+  position: relative; text-align: center; margin: .9rem 0;
+  span {
+    display: inline-block; padding: .25rem .9rem; border-radius: 1rem; font-size: .8rem; font-weight: 600;
+    background: var(--vz-secondary-bg, var(--vz-card-bg)); border: 1px solid var(--vz-border-color); color: var(--vz-body-color);
+  }
+}
+.marca-fase { text-align: center; font-weight: 600; font-size: .85rem; background: var(--vz-light, transparent); }
+
 @media (max-width: 575.98px) {
   .partido-fila { grid-template-columns: 1fr auto 1fr; gap: .3rem; }
   .partido-equipo { font-size: .85rem; }

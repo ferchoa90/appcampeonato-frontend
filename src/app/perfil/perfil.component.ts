@@ -75,6 +75,20 @@ const textoError = (e: HttpErrorResponse) => {
                 <div class="card"><div class="card-body"><h5 class="card-title">Contraseña</h5>
                   <p class="text-muted mb-0"><i class="ri-google-fill me-1"></i>Su cuenta usa Google para ingresar y no tiene contraseña propia.</p></div></div>
               </div>
+              <div class="col-12" *ngIf="auth.esAficionado">
+                <div class="card border border-danger-subtle"><div class="card-body">
+                  <h5 class="card-title text-danger"><i class="ri-delete-bin-line me-1"></i>Eliminar mi cuenta</h5>
+                  <p class="text-muted">Se borrarán su cuenta, sus intereses y los dispositivos registrados para notificaciones. No se puede deshacer.
+                    <a routerLink="/privacidad">Política de privacidad</a></p>
+                  <div *ngIf="errorEliminar" class="alert alert-danger py-2">{{ errorEliminar }}</div>
+                  <div class="row g-2 align-items-end">
+                    <div class="col-md-5" *ngIf="perfil?.tiene_clave"><label class="form-label" for="e-clave">Su contraseña para confirmar</label>
+                      <input id="e-clave" type="password" class="form-control" [(ngModel)]="claveEliminar" autocomplete="current-password"></div>
+                    <div class="col-auto"><button class="btn btn-danger" type="button" (click)="eliminarCuenta()" [disabled]="eliminando">
+                      <span *ngIf="eliminando" class="spinner-border spinner-border-sm me-1"></span>Eliminar mi cuenta</button></div>
+                  </div>
+                </div></div>
+              </div>
             </div>
           </ng-template></li>
 
@@ -192,6 +206,9 @@ export class PerfilComponent implements OnInit {
   guardandoDatos = false;
   guardandoClave = false;
   errorClave = '';
+  claveEliminar = '';
+  errorEliminar = '';
+  eliminando = false;
 
   // notificaciones
   estadoPush: EstadoPush = 'inactivo';
@@ -278,6 +295,17 @@ export class PerfilComponent implements OnInit {
     this.cuenta.cambiarClave(actual, nueva).subscribe({
       next: () => { this.guardandoClave = false; this.formClave.reset(); this.toast.ok('Contraseña actualizada.'); },
       error: (e: HttpErrorResponse) => { this.guardandoClave = false; this.errorClave = textoError(e); },
+    });
+  }
+
+  async eliminarCuenta() {
+    this.errorEliminar = '';
+    if (this.perfil?.tiene_clave && !this.claveEliminar) { this.errorEliminar = 'Escriba su contraseña para confirmar.'; return; }
+    if (!(await this.dialogo.confirmar('¿Eliminar su cuenta?', 'Se borrarán su cuenta y sus datos. No se puede deshacer.', 'Sí, eliminar', true))) { return; }
+    this.eliminando = true;
+    this.cuenta.eliminarCuenta(this.perfil?.tiene_clave ? { password: this.claveEliminar } : { confirmar: true }).subscribe({
+      next: () => { this.eliminando = false; this.toast.ok('Su cuenta fue eliminada.'); this.auth.logout(); },
+      error: (e: HttpErrorResponse) => { this.eliminando = false; this.errorEliminar = textoError(e); },
     });
   }
 

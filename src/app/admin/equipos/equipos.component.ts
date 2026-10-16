@@ -1,10 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Equipo, Usuario } from '../../core/models';
+import { Campeonato, Equipo, Usuario } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { mensajeError } from '../../core/services/api-utils';
 import { DialogService } from '../../core/services/dialog.service';
+import { CampeonatoService } from '../../core/services/campeonato.service';
 import { EquipoService, UsuarioService } from '../../core/services/recursos.service';
 import { ToastService } from '../../core/services/toast.service';
 import { EquipoFormComponent } from './equipo-form.component';
@@ -21,6 +22,12 @@ import { EquipoFormComponent } from './equipo-form.component';
           <div class="col-sm-6 col-lg-4">
             <div class="search-box"><input type="search" class="form-control" placeholder="Buscar por nombre, sigla o ciudad" [(ngModel)]="busqueda" (keyup.enter)="buscar()" (search)="buscar()"><i class="ri-search-line search-icon"></i></div>
           </div>
+          <div class="col-sm-5 col-lg-3">
+            <select class="form-select" [(ngModel)]="campeonato" (change)="buscar()" aria-label="Campeonato">
+              <option value="">Todos los campeonatos</option>
+              <option *ngFor="let c of campeonatos" [value]="c.id">{{ c.nombre }}</option>
+            </select>
+          </div>
           <div class="col-sm-5 col-lg-3" *ngIf="auth.esAdmin">
             <select class="form-select" [(ngModel)]="propietario" (change)="buscar()" aria-label="Propietario">
               <option value="">Todos los propietarios</option><option value="sistema">Del sistema</option>
@@ -34,16 +41,17 @@ import { EquipoFormComponent } from './equipo-form.component';
         <app-estado-lista [cargando]="cargando" [vacio]="!cargando && !equipos.length" mensaje="No hay equipos registrados."></app-estado-lista>
         <div class="table-responsive" *ngIf="equipos.length">
           <table class="table table-hover align-middle admin-tabla mb-0">
-            <thead class="table-light"><tr><th>Escudo</th><th>Nombre</th><th *ngIf="auth.esAdmin">Propietario</th><th>Sigla</th><th>Ciudad</th><th>Estadio</th><th>Jugadores</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+            <thead class="table-light"><tr><th class="text-center" style="width:56px">#</th><th>Escudo</th><th>Nombre</th><th *ngIf="auth.esAdmin">Propietario</th><th>Sigla</th><th>Ciudad</th><th>Estadio</th><th class="text-center">Jugadores</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
             <tbody>
-              <tr *ngFor="let e of equipos">
+              <tr *ngFor="let e of equipos; let i = index">
+                <td class="text-center text-muted">{{ (pagina - 1) * 50 + i + 1 }}</td>
                 <td><app-escudo [equipo]="e" [tam]="36"></app-escudo></td>
                 <td class="fw-medium">{{ e.nombre }}</td>
                 <td *ngIf="auth.esAdmin">{{ e.propietario_nombre || 'Sistema' }}</td>
                 <td>{{ e.abreviatura }}</td>
                 <td>{{ e.ciudad }}</td>
                 <td>{{ e.estadio }}</td>
-                <td>{{ e.num_jugadores }}</td>
+                <td class="text-center">{{ e.num_jugadores }}</td>
                 <td><span class="badge" [ngClass]="e.activo ? 'badge-soft-success' : 'badge-soft-secondary'">{{ e.activo ? 'Activo' : 'Inactivo' }}</span></td>
                 <td class="text-end text-nowrap">
                   <button class="btn btn-sm btn-soft-primary me-1" (click)="abrir(e)" title="Editar"><i class="ri-pencil-line"></i></button>
@@ -68,11 +76,14 @@ export class EquiposComponent implements OnInit {
 
   propietario = '';
   organizadores: Usuario[] = [];
+  campeonato = '';
+  campeonatos: Campeonato[] = [];
 
   constructor(private api: EquipoService, private modal: NgbModal, private dialogo: DialogService, private toast: ToastService,
-              public auth: AuthService, private usuarios: UsuarioService) {}
+              public auth: AuthService, private usuarios: UsuarioService, private campeonatosApi: CampeonatoService) {}
 
   ngOnInit() {
+    this.campeonatosApi.todos().subscribe(c => (this.campeonatos = c));
     if (this.auth.esAdmin) { this.usuarios.organizadores().subscribe(o => (this.organizadores = o)); }
     this.cargar();
   }
@@ -82,6 +93,7 @@ export class EquiposComponent implements OnInit {
   cargar() {
     this.cargando = true;
     const filtros: Record<string, any> = { search: this.busqueda, page: this.pagina };
+    if (this.campeonato) { filtros['campeonato'] = this.campeonato; }
     if (this.propietario === 'sistema') { filtros['propietario__isnull'] = true; }
     else if (this.propietario) { filtros['propietario'] = this.propietario; }
     this.api.listar(filtros).subscribe({

@@ -31,6 +31,11 @@ export class CuentaService {
     return this.http.post<{ detail: string }>(this.api + 'mi/cambiar-clave', { actual, nueva }, { context: silentContext() });
   }
 
+  /** Elimina la cuenta del aficionado y sus datos: con contraseña, o `confirmar: true` si entró sólo con Google. */
+  eliminarCuenta(datos: { password: string } | { confirmar: true }): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(this.api + 'mi/eliminar-cuenta', datos, { context: silentContext() });
+  }
+
   preferencias(): Observable<Preferencias> { return this.http.get<Preferencias>(this.api + 'mi/preferencias'); }
 
   guardarPreferencias(p: Pick<Preferencias, 'modo' | 'tipos' | 'campeonatos' | 'equipos'>): Observable<Preferencias> {

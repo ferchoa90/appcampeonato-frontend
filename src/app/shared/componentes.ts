@@ -22,7 +22,7 @@ export class EscudoComponent {
 @Component({
   selector: 'app-estado-partido',
   template: `<span class="badge" [ngClass]="'badge-soft-' + clase">
-      <span *ngIf="estado === 'INICIADO'" class="punto-vivo"></span>{{ etiqueta }}</span>`,
+      <span *ngIf="estado === 'INICIADO' || estado === 'SEGUNDO_TIEMPO'" class="punto-vivo"></span>{{ etiqueta }}</span>`,
 })
 export class EstadoPartidoComponent {
   @Input() estado = 'PENDIENTE';

@@ -96,6 +96,8 @@ export interface Campeonato {
   partidos_por_dia: number | null;
   hora_inicio: string | null;
   minutos_entre_partidos: number;
+  /** Minutos de cada tiempo (dos tiempos con entretiempo). No altera la separación entre partidos. */
+  duracion_tiempo: number;
   dias_entre_fechas: number;
   /** Reglas de logística: el equipo siempre en el N-ésimo horario del día. */
   horarios_fijos: { equipo: number; orden: number }[];
@@ -152,7 +154,7 @@ export interface Inscripcion {
   grupo_nombre: string | null;
 }
 
-export type EstadoPartido = 'PENDIENTE' | 'INICIADO' | 'ENTRETIEMPO' | 'FINALIZADO' | 'POSTERGADO';
+export type EstadoPartido = 'PENDIENTE' | 'INICIADO' | 'ENTRETIEMPO' | 'SEGUNDO_TIEMPO' | 'FINALIZADO' | 'POSTERGADO';
 export type FaseFecha = 'LIGA' | 'GRUPOS' | 'RONDA' | 'OCTAVOS' | 'CUARTOS' | 'SEMIFINAL' | 'FINAL';
 
 export type TipoEvento =
@@ -170,6 +172,8 @@ export interface Evento {
   jugador_relevo: number | null;
   relevo_nombre?: string | null;
   minuto: number;
+  /** 1 = primer tiempo, 2 = segundo tiempo. */
+  tiempo?: number;
   descripcion: string;
 }
 
@@ -188,6 +192,15 @@ export interface Partido {
   local_detalle: EquipoMini;
   visitante_detalle: EquipoMini;
   fecha_hora: string | null;
+  /** Minutos de cada tiempo del campeonato. */
+  duracion_tiempo?: number;
+  /** Posición en el cuadro de eliminatoria (los ganadores de las llaves 1 y 2 se cruzan, etc.). */
+  llave?: number | null;
+  /** Hora real de cada fase del partido (ISO); se llenan al cambiar el estado. */
+  inicio_at?: string | null;
+  fin_primer_tiempo_at?: string | null;
+  inicio_segundo_tiempo_at?: string | null;
+  fin_at?: string | null;
   estadio: string;
   estado: EstadoPartido;
   estado_nombre: string;
@@ -400,8 +413,9 @@ export interface Configuracion {
 
 export const ESTADOS_PARTIDO: { valor: EstadoPartido; etiqueta: string; clase: string }[] = [
   { valor: 'PENDIENTE', etiqueta: 'Pendiente', clase: 'secondary' },
-  { valor: 'INICIADO', etiqueta: 'En juego', clase: 'danger' },
+  { valor: 'INICIADO', etiqueta: '1.er tiempo', clase: 'danger' },
   { valor: 'ENTRETIEMPO', etiqueta: 'Entretiempo', clase: 'warning' },
+  { valor: 'SEGUNDO_TIEMPO', etiqueta: '2.º tiempo', clase: 'danger' },
   { valor: 'FINALIZADO', etiqueta: 'Finalizado', clase: 'success' },
   { valor: 'POSTERGADO', etiqueta: 'Postergado', clase: 'info' },
 ];

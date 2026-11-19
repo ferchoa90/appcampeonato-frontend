@@ -85,8 +85,8 @@ export class CampeonatoService extends CrudService<Campeonato> {
     return this.http.get<Estadisticas>(this.a(id, 'estadisticas'));
   }
 
-  generarEliminatoria(id: number): Observable<Fecha> {
-    return this.http.post<Fecha>(this.a(id, 'generar-eliminatoria'), {});
+  generarEliminatoria(id: number, clasificados?: number): Observable<Fecha> {
+    return this.http.post<Fecha>(this.a(id, 'generar-eliminatoria'), clasificados ? { clasificados } : {});
   }
 
   /** Sin `confirmar` sólo simula; con `confirmar` guarda las reglas y reordena los horarios de los partidos pendientes. */

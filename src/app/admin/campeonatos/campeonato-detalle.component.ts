@@ -160,13 +160,19 @@ import { ToastService } from '../../core/services/toast.service';
             <li ngbNavItem="tarjetas"><a ngbNavLink>Tarjetas</a>
               <ng-template ngbNavContent><app-tarjetas-ranking [campeonatoId]="camp.id"></app-tarjetas-ranking></ng-template></li>
 
-            <li ngbNavItem="eliminatoria"*ngIf="camp.formato === 'GRUPOS' || camp.modalidad === 'RELAMPAGO'"><a ngbNavLink>Eliminatoria</a>
+            <li ngbNavItem="eliminatoria"*ngIf="camp.formato === 'GRUPOS' || camp.formato === 'LIGA'"><a ngbNavLink>{{ camp.formato === 'LIGA' && camp.modalidad !== 'RELAMPAGO' ? 'Liguilla' : 'Eliminatoria' }}</a>
               <ng-template ngbNavContent>
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <button *ngIf="camp.formato === 'GRUPOS'" class="btn btn-primary" (click)="generarEliminatoria()" [disabled]="guardando || !camp.num_partidos || !!fechasLlaves.length"><i class="ri-git-merge-line align-middle me-1"></i> Generar llaves</button>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                  <select *ngIf="camp.formato === 'LIGA' && camp.modalidad !== 'RELAMPAGO'" class="form-select w-auto" [(ngModel)]="clasificadosLiguilla" [disabled]="!!fechasLlaves.length">
+                    <option [ngValue]="2">Final directa (2 primeros)</option>
+                    <option [ngValue]="4">Los 4 primeros</option>
+                    <option [ngValue]="8">Los 8 primeros</option>
+                  </select>
+                  <button *ngIf="camp.modalidad !== 'RELAMPAGO'" class="btn btn-primary" (click)="generarEliminatoria()" [disabled]="guardando || !camp.num_partidos || !!fechasLlaves.length"><i class="ri-git-merge-line align-middle me-1"></i> {{ camp.formato === 'LIGA' ? 'Generar liguilla' : 'Generar llaves' }}</button>
                   <button class="btn btn-soft-primary" (click)="avanzarEliminatoria()" [disabled]="guardando || !fechasLlaves.length || camp.estado === 'FINALIZADO'"><i class="ri-arrow-right-double-line align-middle me-1"></i> Avanzar de ronda</button>
                 </div>
                 <p class="text-muted small" *ngIf="camp.formato === 'GRUPOS'">Genere las llaves cuando termine la fase de grupos. Al finalizar todos los partidos de una ronda, avance a la siguiente; tras la final el campeonato se cierra.</p>
+                <p class="text-muted small" *ngIf="camp.formato === 'LIGA' && camp.modalidad !== 'RELAMPAGO'">Genere la liguilla cuando termine el fixture: clasifican los primeros de la <b>Tabla</b> y se cruzan el 1.º con el último, el 2.º con el penúltimo, etc. Luego avance de ronda hasta la final; tras la final el campeonato se cierra.</p>
                 <p class="text-muted small" *ngIf="camp.modalidad === 'RELAMPAGO'">Relámpago: el que pierde queda eliminado. Si un partido termina empatado, registre los penales. Al finalizar todos los partidos de la ronda, avance a la siguiente; si quedan equipos impares, uno descansa y pasa directo.</p>
                 <app-estado-lista [vacio]="!fechasLlaves.length" mensaje="Aún no se generó la fase eliminatoria."></app-estado-lista>
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3" *ngIf="fechasLlaves.length">
@@ -194,6 +200,7 @@ export class CampeonatoDetalleComponent implements OnInit {
   filtroEquipos = '';
   fechasFixture: Fecha[] = [];
   fechasLlaves: Fecha[] = [];
+  clasificadosLiguilla = 4;
   fechaInicio = '';
   diasEntre = 7;
   readonly diasSemana = [
@@ -530,9 +537,11 @@ export class CampeonatoDetalleComponent implements OnInit {
   }
 
   async generarEliminatoria() {
-    if (!(await this.dialogo.confirmar('¿Generar la fase eliminatoria?', 'Se crearán las llaves con los clasificados de cada grupo.'))) { return; }
+    const liga = this.camp?.formato === 'LIGA';
+    if (!(await this.dialogo.confirmar(liga ? '¿Generar la liguilla?' : '¿Generar la fase eliminatoria?',
+        liga ? `Se crearán las llaves con los ${this.clasificadosLiguilla} primeros de la tabla.` : 'Se crearán las llaves con los clasificados de cada grupo.'))) { return; }
     this.guardando = true;
-    this.api.generarEliminatoria(this.id).subscribe({
+    this.api.generarEliminatoria(this.id, liga ? this.clasificadosLiguilla : undefined).subscribe({
       next: () => { this.guardando = false; this.toast.ok('Llaves generadas.'); this.abrirProgramacion = true; this.recargar(); },
       error: () => (this.guardando = false),
     });
